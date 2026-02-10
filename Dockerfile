@@ -16,5 +16,12 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
-# Default command - run MCP server
-CMD ["node", "dist/index.js"]
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Default to stdio mode
+ENV MODE=stdio
+
+# Use entrypoint script
+ENTRYPOINT ["docker-entrypoint.sh"]

@@ -39,7 +39,42 @@ DB_SSL=true
 
 # HTTP server (optional)
 PORT=3000
+ALLOWED_HOSTS=localhost,127.0.0.1
 ```
+
+## Docker Setup
+
+To run the HTTP server in Docker, use the `MODE` environment variable:
+
+```bash
+# Using docker run
+docker run -p 3000:3000 \
+  -e MODE=http \
+  -e DB_HOST=your_host \
+  -e DB_PORT=5432 \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=your_password \
+  -e DB_NAME=postgres \
+  -e PORT=3000 \
+  -e ALLOWED_HOSTS=localhost,127.0.0.1 \
+  postgres-mcp-server
+```
+
+```yaml
+# Using docker-compose
+services:
+  postgres-mcp-http:
+    image: postgres-mcp-server:latest
+    environment:
+      MODE: http
+      PORT: 3000
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      # ... database config
+    ports:
+      - "3000:3000"
+```
+
+See [Docker Setup](./docker.md) for more details.
 
 ## Endpoints
 

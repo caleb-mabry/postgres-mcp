@@ -11,6 +11,13 @@ A Model Context Protocol (MCP) server that provides secure database access to Po
 
 **Full documentation is available at: [caleb-mabry.github.io/postgres-mcp](https://caleb-mabry.github.io/postgres-mcp/)**
 
+### Quick Links
+- [Getting Started](https://caleb-mabry.github.io/postgres-mcp/docs/intro)
+- [Claude Desktop Setup](https://caleb-mabry.github.io/postgres-mcp/docs/setup/claude-desktop)
+- [HTTP Server Setup](https://caleb-mabry.github.io/postgres-mcp/docs/setup/http-server)
+- [Docker Setup](https://caleb-mabry.github.io/postgres-mcp/docs/setup/docker)
+- [Usage Modes](https://caleb-mabry.github.io/postgres-mcp/docs/guides/usage-modes)
+
 ## Features
 
 - **MCP Tools**: Query execution, table listing, schema inspection, and constraint information
@@ -23,11 +30,15 @@ A Model Context Protocol (MCP) server that provides secure database access to Po
 
 ### For Claude Desktop Users
 
-👉 **See [CLAUDE_SETUP.md](./CLAUDE_SETUP.md) for complete Claude Desktop setup instructions**
+See the **[📖 Claude Desktop Setup Guide](https://caleb-mabry.github.io/postgres-mcp/docs/setup/claude-desktop)** for complete instructions.
 
 ### For HTTP/API Usage
 
-See [HTTP_SERVER.md](./HTTP_SERVER.md) for HTTP transport setup
+See the **[📖 HTTP Server Setup Guide](https://caleb-mabry.github.io/postgres-mcp/docs/setup/http-server)** for complete instructions.
+
+### For Docker
+
+See the **[📖 Docker Setup Guide](https://caleb-mabry.github.io/postgres-mcp/docs/setup/docker)** for complete instructions.
 
 ### Direct Installation
 
@@ -199,6 +210,9 @@ npm run test:integration
 | `DB_SSL`            | `true`      | Enable SSL connection                   |
 | `READ_ONLY`         | `true`      | Restrict to SELECT/WITH/EXPLAIN queries |
 | `QUERY_TIMEOUT`     | `30000`     | Query timeout in milliseconds           |
+| `MODE`              | `stdio`     | Server mode in Docker: `stdio` or `http` |
+
+For detailed documentation on all features and setup options, visit **[caleb-mabry.github.io/postgres-mcp](https://caleb-mabry.github.io/postgres-mcp/)**.
 | `MAX_PAGE_SIZE`     | `500`       | Maximum rows per page                   |
 | `DEFAULT_PAGE_SIZE` | `100`       | Default page size when not specified    |
 | `PORT`              | `3000`      | HTTP server port (HTTP mode only)       |

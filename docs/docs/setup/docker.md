@@ -119,6 +119,7 @@ services:
 
 All standard environment variables are supported:
 
+- `MODE` - Server mode: `stdio` (default) or `http`
 - `DB_HOST` - PostgreSQL host
 - `DB_PORT` - PostgreSQL port (default: 5432)
 - `DB_USER` - Database user
@@ -132,6 +133,8 @@ All standard environment variables are supported:
 - `MAX_PAGE_SIZE` - Maximum rows per page
 - `DEFAULT_PAGE_SIZE` - Default rows per page
 - `LOG_LEVEL` - Logging level (debug, info, warn, error)
+- `PORT` - HTTP server port (default: 3000, HTTP mode only)
+- `ALLOWED_HOSTS` - Comma-separated allowed hosts (HTTP mode only)
 
 ## Production Considerations
 
@@ -170,18 +173,59 @@ services:
 
 ## Network Configuration
 
-The MCP server communicates via stdin/stdout, so no network ports need to be exposed. However, if using HTTP mode, expose port 3000:
+The container uses a `MODE` environment variable to determine which server to run:
+
+- `MODE=stdio` (default) - Standard MCP server using stdin/stdout
+- `MODE=http` - HTTP server on specified port
+
+### Standard MCP Server (stdio)
+
+The MCP server communicates via stdin/stdout by default, so no network ports need to be exposed:
 
 ```yaml
 services:
   postgres-mcp-server:
     image: postgres-mcp-server:latest
+    environment:
+      MODE: stdio  # This is the default
+    stdin_open: true
+    tty: true
+```
+
+### HTTP Server Mode
+
+To run the HTTP server, set `MODE=http` and expose port 3000:
+
+```yaml
+services:
+  postgres-mcp-http:
+    image: postgres-mcp-server:latest
+    environment:
+      MODE: http
+      PORT: 3000
+      ALLOWED_HOSTS: "localhost,127.0.0.1,example.com"
+      # ... other DB settings
     ports:
       - "3000:3000"
-    environment:
-      PORT: 3000
-    command: ["node", "dist/http-server.js"]
 ```
+
+Or with `docker run`:
+
+```bash
+docker run -p 3000:3000 \
+  -e MODE=http \
+  -e DB_HOST=postgres \
+  -e DB_PORT=5432 \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=postgres \
+  -e DB_NAME=mydb \
+  -e DB_SSL=false \
+  -e PORT=3000 \
+  -e ALLOWED_HOSTS=localhost,127.0.0.1 \
+  postgres-mcp-server
+```
+
+See [HTTP Server documentation](../guides/usage-modes.md#http-transport) for more details.
 
 ## Troubleshooting
 

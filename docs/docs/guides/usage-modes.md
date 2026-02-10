@@ -94,6 +94,10 @@ Server will be available at:
 
 ### HTTP Mode Only
 - `PORT` - HTTP server port (default: 3000)
+- `ALLOWED_HOSTS` - Comma-separated allowed hosts (e.g., `localhost,127.0.0.1`)
+
+### Docker Only
+- `MODE` - Set to `stdio` (default) or `http` to choose server mode in Docker containers
 
 ## Choosing the Right Mode
 

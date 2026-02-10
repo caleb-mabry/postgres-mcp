@@ -16,10 +16,13 @@ docs/
 ├── docs/                      # Documentation pages
 │   ├── intro.md              # Getting started page
 │   ├── setup/                # Setup guides
-│   │   ├── claude-desktop.md # Claude Desktop setup (migrated from CLAUDE_SETUP.md)
-│   │   └── http-server.md    # HTTP server setup (migrated from HTTP_SERVER.md)
+│   │   ├── claude-desktop.md # Claude Desktop setup
+│   │   ├── http-server.md    # HTTP server setup
+│   │   ├── docker.md         # Docker setup
+│   │   ├── cline.md          # Cline (VS Code) setup
+│   │   └── zed.md            # Zed editor setup
 │   ├── guides/               # Usage guides
-│   │   └── usage-modes.md    # Usage modes comparison (migrated from USAGE_MODES.md)
+│   │   └── usage-modes.md    # Usage modes comparison
 │   └── deployment/           # Deployment docs
 │       └── github-pages.md   # GitHub Pages deployment guide
 ├── src/                      # React components
@@ -59,14 +62,16 @@ Created `.github/workflows/deploy-docs.yml` that:
 
 ### 5. Migrated Documentation
 
-Successfully migrated existing markdown documentation:
-- ✅ CLAUDE_SETUP.md → docs/docs/setup/claude-desktop.md
-- ✅ HTTP_SERVER.md → docs/docs/setup/http-server.md
-- ✅ USAGE_MODES.md → docs/docs/guides/usage-modes.md
+Successfully consolidated all documentation into Docusaurus:
+- ✅ CLAUDE_SETUP.md → [docs/docs/setup/claude-desktop.md](docs/docs/setup/claude-desktop.md) (root file removed)
+- ✅ HTTP_SERVER.md → [docs/docs/setup/http-server.md](docs/docs/setup/http-server.md) (root file removed)
+- ✅ USAGE_MODES.md → [docs/docs/guides/usage-modes.md](docs/docs/guides/usage-modes.md) (root file removed)
 
 Added new documentation:
 - ✅ docs/docs/intro.md - Comprehensive getting started guide
 - ✅ docs/docs/deployment/github-pages.md - Deployment guide
+
+**All project documentation is now maintained exclusively in the `/docs` directory.**
 
 ### 6. Homepage Customization
 
