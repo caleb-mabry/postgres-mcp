@@ -1,10 +1,7 @@
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool, PoolConfig } from "pg";
-import * as dotenv from "dotenv";
 import { config } from "./config.js";
 import { log } from "./logger.js";
-
-dotenv.config();
 
 export interface Database {
   [key: string]: any;

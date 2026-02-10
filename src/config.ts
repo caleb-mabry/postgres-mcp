@@ -1,6 +1,9 @@
 /**
  * Centralized configuration management for environment variables
  */
+import * as dotenv from "dotenv";
+
+dotenv.config();
 
 export interface AppConfig {
   // Database configuration
