@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "postgres-mcp-server": "dist/index.js"
+    "postgres-mcp-server": "dist/index.js",
+    "postgres-mcp-http": "dist/http-server.js"
   },
   "files": [
     "dist/**/*",
