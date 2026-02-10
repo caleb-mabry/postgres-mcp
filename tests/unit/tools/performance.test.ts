@@ -43,6 +43,13 @@ jest.mock('kysely', () => ({
 // Mock database module  
 jest.mock('../../../src/db', () => ({
   getDb: jest.fn(() => ({})),
+  getPool: jest.fn(() => ({
+    query: jest.fn(() => Promise.resolve({
+      rows: [
+        { 'QUERY PLAN': 'Seq Scan on users  (cost=0.00..35.50 rows=2550 width=4)' }
+      ]
+    }))
+  })),
   closeDb: jest.fn(() => Promise.resolve())
 }));
 
@@ -150,9 +157,11 @@ describe('Performance Tools Unit Tests', () => {
 
     describe('Error Handling', () => {
       test('should return error object for failed queries', async () => {
-        mockSqlRaw.mockImplementationOnce(() => ({
-          execute: jest.fn(() => Promise.reject(new Error('Database error')))
-        } as any));
+        // Mock getPool to throw an error
+        const mockDbModule = require('../../../src/db');
+        mockDbModule.getPool.mockImplementationOnce(() => ({
+          query: jest.fn(() => Promise.reject(new Error('Database error')))
+        }));
 
         const { explainQueryTool } = await import('../../../src/tools/performance');
         

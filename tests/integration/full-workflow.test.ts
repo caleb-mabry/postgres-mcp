@@ -101,7 +101,7 @@ describe('Full Workflow Integration Tests', () => {
           expect(joinQuery.rows!.length).toBe(3);
 
         } finally {
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         }
       });
     });
@@ -182,7 +182,7 @@ describe('Full Workflow Integration Tests', () => {
           expect(deleteUser.rowCount).toBe(1);
 
         } finally {
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         }
       });
     });
@@ -200,7 +200,7 @@ describe('Full Workflow Integration Tests', () => {
             sql: 'INVALID SQL SYNTAX'
           });
           expect(invalidQuery.error).toBeDefined();
-          expect(invalidQuery.error).toContain('SQL syntax error');
+          expect(invalidQuery.error).toContain('Invalid SQL syntax');
 
           // Test constraint violation
           const duplicateEmail = await queryTool({
@@ -210,7 +210,7 @@ describe('Full Workflow Integration Tests', () => {
             `
           });
           expect(duplicateEmail.error).toBeDefined();
-          expect(duplicateEmail.error).toContain('Duplicate value');
+          expect(duplicateEmail.error).toContain('duplicate key');
 
           // Test non-existent table
           const nonExistentTable = await describeTableTool({
@@ -230,7 +230,7 @@ describe('Full Workflow Integration Tests', () => {
           expect(nonExistentSchema.tables!.length).toBe(0);
 
         } finally {
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         }
       });
     });
@@ -266,7 +266,7 @@ describe('Full Workflow Integration Tests', () => {
           expect(viewColumns).toContain('category_name');
 
         } finally {
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         }
       });
     });
@@ -315,7 +315,7 @@ describe('Full Workflow Integration Tests', () => {
           expect(windowQuery.rows).toBeDefined();
 
         } finally {
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         }
       });
     });

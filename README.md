@@ -1,10 +1,15 @@
 # Postgres MCP Server
 
 [![npm version](https://badge.fury.io/js/postgres-mcp-server.svg)](https://www.npmjs.com/package/postgres-mcp-server)
-[![Tests](https://github.com/abiswas97/postgres-mcp-server/actions/workflows/test.yml/badge.svg)](https://github.com/abiswas97/postgres-mcp-server/actions/workflows/test.yml)
-[![GitHub issues](https://img.shields.io/github/issues/abiswas97/postgres-mcp-server)](https://github.com/abiswas97/postgres-mcp-server/issues)
+[![Tests](https://github.com/caleb-mabry/postgres-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/caleb-mabry/postgres-mcp/actions/workflows/test.yml)
+[![GitHub issues](https://img.shields.io/github/issues/caleb-mabry/postgres-mcp)](https://github.com/caleb-mabry/postgres-mcp/issues)
+[![Documentation](https://img.shields.io/badge/docs-docusaurus-blue)](https://caleb-mabry.github.io/postgres-mcp/)
 
 A Model Context Protocol (MCP) server that provides secure database access to PostgreSQL through Kysely ORM. This server enables Claude Desktop to interact with PostgreSQL databases using natural language.
+
+## 📚 Documentation
+
+**Full documentation is available at: [caleb-mabry.github.io/postgres-mcp](https://caleb-mabry.github.io/postgres-mcp/)**
 
 ## Features
 
@@ -14,10 +19,20 @@ A Model Context Protocol (MCP) server that provides secure database access to Po
 - **Error Handling**: Graceful error messages for connection and query issues
 - **Security**: Parameterized queries to prevent SQL injection
 
-## Installation
+## Quick Start
+
+### For Claude Desktop Users
+
+👉 **See [CLAUDE_SETUP.md](./CLAUDE_SETUP.md) for complete Claude Desktop setup instructions**
+
+### For HTTP/API Usage
+
+See [HTTP_SERVER.md](./HTTP_SERVER.md) for HTTP transport setup
+
+### Direct Installation
 
 ```bash
-npx postgres-mcp-server
+npx -y postgres-mcp-server
 ```
 
 ## Configuration
@@ -54,35 +69,97 @@ DB_SSL=true
 - **Security**: Parameterized queries prevent SQL injection, READ_ONLY mode by default
 - **Type Safety**: Full TypeScript support with Zod schema validation
 
-## Claude Desktop Configuration
+## Client Configuration
 
-Add this server to your Claude Desktop configuration file:
+The postgres-mcp-server works with any MCP-compatible client. See configuration examples below:
 
-Edit `claude_desktop_config.json`:
+### Claude Desktop
+
+Add to `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "postgres-mcp-server": {
       "command": "npx",
-      "args": ["postgres-mcp-server"],
+      "args": ["-y", "postgres-mcp-server"],
       "env": {
         "DB_HOST": "127.0.0.1",
         "DB_PORT": "5432",
         "DB_USER": "postgres",
         "DB_PASSWORD": "your_password_here",
         "DB_NAME": "your_database_name",
-        "DB_SSL": "true"
+        "DB_SSL": "false",
+        "READ_ONLY": "true"
       }
     }
   }
 }
 ```
 
-### Configuration File Locations
-
+**Config locations:**
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+See [claude_config_example.json](./claude_config_example.json) for a full example.
+
+### Cline (VS Code)
+
+Add to `.cline/mcp_settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "postgres-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "postgres-mcp-server"],
+      "env": {
+        "DB_HOST": "localhost",
+        "DB_NAME": "your_database",
+        "DB_USER": "postgres",
+        "DB_PASSWORD": "your_password"
+      }
+    }
+  }
+}
+```
+
+See [cline_mcp_settings_example.json](./cline_mcp_settings_example.json) for a full example.
+
+### Zed Editor
+
+Add to Zed settings (Settings → Context Servers):
+
+```json
+{
+  "context_servers": {
+    "postgres-mcp-server": {
+      "command": {
+        "path": "npx",
+        "args": ["-y", "postgres-mcp-server"]
+      },
+      "settings": {
+        "DB_HOST": "localhost",
+        "DB_NAME": "your_database",
+        "DB_USER": "postgres",
+        "DB_PASSWORD": "your_password"
+      }
+    }
+  }
+}
+```
+
+See [zed_settings_example.json](./zed_settings_example.json) for a full example.
+
+### Docker
+
+Use the included Dockerfile or docker-compose.yml:
+
+```bash
+docker-compose up -d
+```
+
+See [docker-compose.example.yml](./docker-compose.example.yml) for a full example.
 
 ## Development
 

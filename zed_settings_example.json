@@ -1,0 +1,19 @@
+{
+  "context_servers": {
+    "postgres-mcp-server": {
+      "command": {
+        "path": "npx",
+        "args": ["-y", "postgres-mcp-server"]
+      },
+      "settings": {
+        "DB_HOST": "127.0.0.1",
+        "DB_PORT": "5432",
+        "DB_USER": "postgres",
+        "DB_PASSWORD": "your_password_here",
+        "DB_NAME": "your_database_name",
+        "DB_SSL": "false",
+        "READ_ONLY": "true"
+      }
+    }
+  }
+}

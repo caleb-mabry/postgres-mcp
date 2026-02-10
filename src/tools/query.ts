@@ -1,15 +1,23 @@
-import { getDb } from "../db.js";
-import { sql } from "kysely";
+import { getPool } from "../db.js";
+import { config } from "../config.js";
 import {
   QueryInputSchema,
   validateInput,
   type QueryOutput,
 } from "../validation.js";
+import NodeSQL from "node-sql-parser/build/postgresql.js";
 
-const MAX_PAGE_SIZE = parseInt(process.env.MAX_PAGE_SIZE || "500", 10);
-const DEFAULT_PAGE_SIZE = parseInt(process.env.DEFAULT_PAGE_SIZE || "100", 10);
+export const MAX_PAGE_SIZE = config.query.maxPageSize;
+export const DEFAULT_PAGE_SIZE = config.query.defaultPageSize;
+// Set to 'false' to disable automatic LIMIT application
+const AUTO_LIMIT = config.query.autoLimit;
+// Maximum payload size in bytes (default 5MB)
+export const MAX_PAYLOAD_SIZE = config.query.maxPayloadSize;
+
+const sqlParser = new NodeSQL.Parser();
 
 function isReadOnlyMode(): boolean {
+  // Check environment variable directly to support test configuration changes
   return process.env.READ_ONLY !== "false";
 }
 
@@ -49,69 +57,159 @@ function validateSqlSafety(sqlString: string): {
     return { isValid: false, error: "SQL query cannot be empty" };
   }
 
+  // Check for dangerous operations BEFORE parsing (since parser may not support them)
   const upperSql = trimmedSql.toUpperCase();
-
-  for (const dangerous of DANGEROUS_OPERATIONS) {
-    const regex = new RegExp(`\\b${dangerous}\\b`, "i");
-    if (regex.test(upperSql)) {
-      return {
-        isValid: false,
-        error: `Dangerous operation '${dangerous}' is not allowed`,
-      };
-    }
+  const sqlWords = upperSql.split(/\s+/);
+  const firstWord = sqlWords[0];
+  
+  if (DANGEROUS_OPERATIONS.includes(firstWord)) {
+    return {
+      isValid: false,
+      error: `Dangerous operation '${firstWord}' is not allowed`,
+    };
   }
 
-  if (isReadOnlyMode()) {
-    const isReadOnly =
-      upperSql.startsWith("SELECT") ||
-      upperSql.startsWith("WITH") ||
-      upperSql.startsWith("EXPLAIN");
+  // Handle EXPLAIN queries - they're read-only and don't need parsing
+  if (firstWord === 'EXPLAIN') {
+    // EXPLAIN is allowed in both read-only and write modes
+    return { isValid: true };
+  }
 
-    if (!isReadOnly) {
+  // Handle MERGE and UPSERT - not allowed in read-only mode
+  if (firstWord === 'MERGE' || firstWord === 'UPSERT') {
+    if (isReadOnlyMode()) {
       return {
         isValid: false,
-        error:
-          "Only SELECT, WITH, and EXPLAIN queries are allowed in read-only mode",
+        error: "Only SELECT, WITH, and EXPLAIN queries are allowed in read-only mode",
       };
     }
-  } else {
-    // Even in write mode, validate UPDATE and DELETE have WHERE clauses
-    if (upperSql.includes("UPDATE") || upperSql.includes("DELETE")) {
-      if (!validateWhereClause(upperSql)) {
+    // These operations require WHERE clauses in write mode, but parser can't handle them
+    // For now, we'll reject them since we can't safely validate them
+    return {
+      isValid: false,
+      error: "MERGE and UPSERT operations are not currently supported",
+    };
+  }
+
+  // Parse SQL to understand its structure
+  let ast;
+  try {
+    ast = sqlParser.astify(trimmedSql);
+  } catch (parseError) {
+    return {
+      isValid: false,
+      error: "Invalid SQL syntax - unable to parse query",
+    };
+  }
+
+  // Convert to array if single statement
+  const statements = Array.isArray(ast) ? ast : [ast];
+
+  // Validate each statement
+  for (const statement of statements) {
+    const statementType = statement.type?.toUpperCase();
+
+    // Check for dangerous operations
+    if (DANGEROUS_OPERATIONS.includes(statementType)) {
+      return {
+        isValid: false,
+        error: `Dangerous operation '${statementType}' is not allowed`,
+      };
+    }
+
+    // In read-only mode, only allow SELECT, WITH (CTE), and EXPLAIN
+    if (isReadOnlyMode()) {
+      const allowedTypes = ["SELECT", "WITH", "EXPLAIN"];
+      if (!allowedTypes.includes(statementType)) {
         return {
           isValid: false,
-          error:
-            "UPDATE and DELETE operations must include a valid WHERE clause (not WHERE 1=1, WHERE true, etc.)",
+          error: "Only SELECT, WITH, and EXPLAIN queries are allowed in read-only mode",
         };
+      }
+    } else {
+      // Even in write mode, validate UPDATE and DELETE have WHERE clauses
+      if (statementType === "UPDATE" || statementType === "DELETE") {
+        // Type guard to check if statement has a where property
+        if (!("where" in statement) || !statement.where) {
+          return {
+            isValid: false,
+            error: `${statementType} operations must include a WHERE clause`,
+          };
+        }
+
+        // Check for dangerous WHERE patterns that effectively disable the clause
+        // These are patterns like WHERE 1=1, WHERE TRUE, WHERE 1, WHERE '1'='1'
+        const where: any = statement.where;
+        
+        // Check for WHERE TRUE
+        if (where && where.type === 'bool' && where.value === true) {
+          return {
+            isValid: false,
+            error: `${statementType} operations cannot use trivial WHERE clauses like WHERE 1=1 or WHERE TRUE`,
+          };
+        }
+        
+        // Check for WHERE 1 (just a constant value)
+        if (where && where.type === 'number') {
+          return {
+            isValid: false,
+            error: `${statementType} operations cannot use trivial WHERE clauses like WHERE 1=1 or WHERE TRUE`,
+          };
+        }
+        
+        // Check for WHERE 1=1 pattern (binary expression comparing same constants)
+        if (where && where.type === 'binary_expr' && where.operator === '=') {
+          const left = where.left;
+          const right = where.right;
+          
+          // Both sides are the same constant number
+          if (left && right && left.type === 'number' && right.type === 'number' && left.value === right.value) {
+            return {
+              isValid: false,
+              error: `${statementType} operations cannot use trivial WHERE clauses like WHERE 1=1 or WHERE TRUE`,
+            };
+          }
+          
+          // Both sides are the same string literal
+          if (left && right && left.type === 'single_quote_string' && right.type === 'single_quote_string' && left.value === right.value) {
+            return {
+              isValid: false,
+              error: `${statementType} operations cannot use trivial WHERE clauses like WHERE 1=1 or WHERE TRUE`,
+            };
+          }
+          
+          // Both sides are the same identifier (double-quoted or column reference)
+          // In PostgreSQL, "1"="1" would be comparing column "1" to column "1"
+          if (left && right && left.type === 'column_ref' && right.type === 'column_ref') {
+            // Extract values from nested structure
+            const leftExpr = left.column?.expr || left.column;
+            const rightExpr = right.column?.expr || right.column;
+            
+            // Check if both are double_quote_string with same value
+            if (leftExpr && rightExpr && 
+                leftExpr.type === 'double_quote_string' && 
+                rightExpr.type === 'double_quote_string' && 
+                leftExpr.value === rightExpr.value) {
+              return {
+                isValid: false,
+                error: `${statementType} operations cannot use trivial WHERE clauses like WHERE 1=1 or WHERE TRUE`,
+              };
+            }
+            
+            // Check if both are the same column name
+            if (typeof leftExpr === 'string' && typeof rightExpr === 'string' && leftExpr === rightExpr) {
+              return {
+                isValid: false,
+                error: `${statementType} operations cannot use trivial WHERE clauses like WHERE 1=1 or WHERE TRUE`,
+              };
+            }
+          }
+        }
       }
     }
   }
 
   return { isValid: true };
-}
-
-function validateWhereClause(upperSql: string): boolean {
-  if (!upperSql.includes("WHERE")) {
-    return false;
-  }
-
-  // Check for dangerous patterns that make WHERE clause ineffective
-  const dangerousPatterns = [
-    "WHERE 1=1",
-    "WHERE 1 = 1",
-    "WHERE TRUE",
-    "WHERE 1",
-    "WHERE '1'='1'",
-    'WHERE "1"="1"',
-  ];
-
-  for (const pattern of dangerousPatterns) {
-    if (upperSql.includes(pattern)) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function isReadOnlyQuery(sqlString: string): boolean {
@@ -146,12 +244,14 @@ function applyPagination(
   actualPageSize: number;
   actualOffset: number;
 } {
-  const upperSql = sqlString.toUpperCase();
+  // Strip trailing semicolons to avoid syntax errors when adding LIMIT/OFFSET
+  const cleanedSql = sqlString.trim().replace(/;+$/, '');
+  const upperSql = cleanedSql.toUpperCase();
 
   // Don't modify if already has LIMIT or OFFSET
   if (upperSql.includes("LIMIT") || upperSql.includes("OFFSET")) {
     return {
-      sql: sqlString,
+      sql: cleanedSql,
       actualPageSize: pageSize || DEFAULT_PAGE_SIZE,
       actualOffset: offset || 0,
     };
@@ -163,15 +263,42 @@ function applyPagination(
 
   // Don't add LIMIT to single-row aggregates
   if (isSingleRowAggregate(upperSql)) {
-    return { sql: sqlString, actualPageSize, actualOffset };
+    return { sql: cleanedSql, actualPageSize, actualOffset };
   }
 
-  let paginatedSql = `${sqlString.trim()} LIMIT ${actualPageSize}`;
+  // If AUTO_LIMIT is disabled and no pageSize was explicitly provided, don't add LIMIT
+  if (!AUTO_LIMIT && !pageSize) {
+    return { sql: cleanedSql, actualPageSize, actualOffset };
+  }
+
+  let paginatedSql = `${cleanedSql} LIMIT ${actualPageSize}`;
   if (actualOffset > 0) {
     paginatedSql += ` OFFSET ${actualOffset}`;
   }
 
   return { sql: paginatedSql, actualPageSize, actualOffset };
+}
+
+function validateParameters(
+  parameters: unknown[]
+): { error: string } | null {
+  for (const param of parameters) {
+    if (
+      param !== null &&
+      typeof param !== "string" &&
+      typeof param !== "number" &&
+      typeof param !== "boolean"
+    ) {
+      return {
+        error:
+          "Invalid parameter type - only string, number, boolean, and null are allowed",
+      };
+    }
+    if (typeof param === "number" && !Number.isFinite(param)) {
+      return { error: "Invalid numeric parameter - must be finite number" };
+    }
+  }
+  return null;
 }
 
 export async function queryTool(input: unknown): Promise<QueryOutput> {
@@ -188,8 +315,14 @@ export async function queryTool(input: unknown): Promise<QueryOutput> {
       return { error: sqlValidation.error };
     }
 
-    const db = getDb();
+    const pool = getPool();
     const trimmedSql = validatedInput.sql.trim();
+    const params = validatedInput.parameters ?? [];
+
+    if (params.length > 0) {
+      const paramError = validateParameters(params);
+      if (paramError) return paramError;
+    }
 
     if (isReadOnlyQuery(trimmedSql)) {
       const {
@@ -202,57 +335,21 @@ export async function queryTool(input: unknown): Promise<QueryOutput> {
         validatedInput.offset
       );
 
-      let result;
-      if (validatedInput.parameters && validatedInput.parameters.length > 0) {
-        for (const param of validatedInput.parameters) {
-          if (
-            param !== null &&
-            typeof param !== "string" &&
-            typeof param !== "number" &&
-            typeof param !== "boolean"
-          ) {
-            return {
-              error:
-                "Invalid parameter type - only string, number, boolean, and null are allowed",
-            };
-          }
-        }
+      // Execute the query
+      const result = params.length > 0
+        ? await pool.query(paginatedSql, params)
+        : await pool.query(paginatedSql);
 
-        // Use safer parameter substitution with better escaping than the original approach
-        let finalSql = paginatedSql;
-        validatedInput.parameters.forEach((param, index) => {
-          const placeholder = `$${index + 1}`;
-          let escapedValue: string;
-
-          if (param === null) {
-            escapedValue = "NULL";
-          } else if (typeof param === "string") {
-            escapedValue = `'${param
-              .replace(/'/g, "''")
-              .replace(/\\/g, "\\\\")
-              .replace(/\0/g, "")}'`;
-          } else if (typeof param === "boolean") {
-            escapedValue = param ? "TRUE" : "FALSE";
-          } else {
-            // Numbers - validate they're actually numbers and not NaN/Infinity
-            if (!Number.isFinite(param)) {
-              return {
-                error: "Invalid numeric parameter - must be finite number",
-              };
-            }
-            escapedValue = String(param);
-          }
-
-          finalSql = finalSql.replace(
-            new RegExp(`\\${placeholder}\\b`, "g"),
-            escapedValue
-          );
-        });
-
-        result = await sql.raw(finalSql).execute(db);
-      } else {
-        // No parameters - use raw SQL directly
-        result = await sql.raw(paginatedSql).execute(db);
+      // Check payload size after query execution
+      const payloadJson = JSON.stringify(result.rows);
+      const payloadSize = Buffer.byteLength(payloadJson, 'utf8');
+      
+      if (payloadSize > MAX_PAYLOAD_SIZE) {
+        const sizeMB = (payloadSize / (1024 * 1024)).toFixed(2);
+        const maxMB = (MAX_PAYLOAD_SIZE / (1024 * 1024)).toFixed(2);
+        return {
+          error: `Query result payload (${sizeMB}MB) exceeds maximum allowed size (${maxMB}MB). Please reduce pageSize or add more specific WHERE conditions to limit results.`,
+        };
       }
 
       // Determine if there are more rows available
@@ -269,119 +366,25 @@ export async function queryTool(input: unknown): Promise<QueryOutput> {
       };
     } else {
       // For write operations (when not in read-only mode)
-      let result;
-      if (validatedInput.parameters && validatedInput.parameters.length > 0) {
-        for (const param of validatedInput.parameters) {
-          if (
-            param !== null &&
-            typeof param !== "string" &&
-            typeof param !== "number" &&
-            typeof param !== "boolean"
-          ) {
-            return {
-              error:
-                "Invalid parameter type - only string, number, boolean, and null are allowed",
-            };
-          }
-        }
+      const cleanedSql = trimmedSql.replace(/;+$/, '');
 
-        let finalSql = trimmedSql;
-        validatedInput.parameters.forEach((param, index) => {
-          const placeholder = `$${index + 1}`;
-          let escapedValue: string;
+      const result = params.length > 0
+        ? await pool.query(cleanedSql, params)
+        : await pool.query(cleanedSql);
 
-          if (param === null) {
-            escapedValue = "NULL";
-          } else if (typeof param === "string") {
-            escapedValue = `'${param
-              .replace(/'/g, "''")
-              .replace(/\\/g, "\\\\")
-              .replace(/\0/g, "")}'`;
-          } else if (typeof param === "boolean") {
-            escapedValue = param ? "TRUE" : "FALSE";
-          } else {
-            if (!Number.isFinite(param)) {
-              return {
-                error: "Invalid numeric parameter - must be finite number",
-              };
-            }
-            escapedValue = String(param);
-          }
-
-          finalSql = finalSql.replace(
-            new RegExp(`\\${placeholder}\\b`, "g"),
-            escapedValue
-          );
-        });
-
-        result = await sql.raw(finalSql).execute(db);
-      } else {
-        result = await sql.raw(trimmedSql).execute(db);
-      }
       return {
-        rowCount: result.numAffectedRows ? Number(result.numAffectedRows) : 0,
+        rowCount: result.rowCount ?? 0,
       };
     }
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
-    let sanitizedError: string;
-    let errorCode: string;
-    let hint: string | undefined;
 
-    if (errorMessage.includes("syntax error")) {
-      sanitizedError = "SQL syntax error - please check your query";
-      errorCode = "SYNTAX_ERROR";
-      hint =
-        "Review your SQL syntax, check for missing keywords, proper quotes, and correct table/column names";
-    } else if (
-      errorMessage.includes("permission denied") ||
-      errorMessage.includes("access denied")
-    ) {
-      sanitizedError = "Access denied - insufficient permissions";
-      errorCode = "PERMISSION_DENIED";
-      hint =
-        "Contact your database administrator to grant necessary permissions";
-    } else if (
-      errorMessage.includes("duplicate key value") ||
-      errorMessage.includes("unique constraint")
-    ) {
-      sanitizedError = "Duplicate value - this record already exists";
-      errorCode = "DUPLICATE_KEY";
-      hint =
-        "Check for existing records with the same unique values before inserting";
-    } else if (errorMessage.includes("foreign key constraint")) {
-      sanitizedError = "Foreign key constraint violation";
-      errorCode = "FOREIGN_KEY_VIOLATION";
-      hint = "Ensure referenced records exist before creating relationships";
-    } else if (
-      errorMessage.includes("relation") &&
-      errorMessage.includes("does not exist")
-    ) {
-      sanitizedError = "Table or view does not exist";
-      errorCode = "RELATION_NOT_FOUND";
-      hint =
-        "Check table name spelling and schema. Use list_tables to see available tables";
-    } else if (
-      errorMessage.includes("column") &&
-      errorMessage.includes("does not exist")
-    ) {
-      sanitizedError = "Column does not exist";
-      errorCode = "COLUMN_NOT_FOUND";
-      hint =
-        "Check column name spelling. Use describe_table to see available columns";
-    } else if (
-      errorMessage.includes("timeout") ||
-      errorMessage.includes("cancelled")
-    ) {
-      sanitizedError = "Query timeout - operation took too long";
-      errorCode = "TIMEOUT";
-      hint = "Try optimizing your query or adding appropriate indexes";
-    } else {
-      sanitizedError = "Database operation failed";
-      errorCode = "DATABASE_ERROR";
-      hint = "Check your query syntax and permissions, then try again";
-    }
+    // Extract PostgreSQL-specific error details if available
+    const pgError = error as any;
+    const errorCode = pgError?.code || "UNKNOWN";
+    const hint = pgError?.hint;
+    const sanitizedError = errorMessage.replace(/\s+/g, " ").trim();
 
     return {
       error: sanitizedError,

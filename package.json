@@ -16,16 +16,17 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:http": "node dist/http-server.js",
     "dev": "tsx src/index.ts",
+    "dev:http": "tsx src/http-server.ts",
     "test": "jest",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepublishOnly": "npm run build && npm test",
-    "version:patch": "npm version patch",
-    "version:minor": "npm version minor",
-    "version:major": "npm version major"
+    "coverage:clean": "rm -rf coverage",
+    "coverage:report": "npm run test:coverage && open coverage/lcov-report/index.html",
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "mcp",
@@ -38,26 +39,31 @@
     "orm",
     "typescript"
   ],
-  "author": "Avi <avishek.biswas.1997@gmail.com>",
+  "author": "Caleb Mabry",
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/abiswas97/postgres-mcp-server.git"
+    "url": "git+https://github.com/caleb-mabry/postgres-mcp.git"
   },
-  "homepage": "https://github.com/abiswas97/postgres-mcp-server#readme",
+  "homepage": "https://github.com/caleb-mabry/postgres-mcp#readme",
   "bugs": {
-    "url": "https://github.com/abiswas97/postgres-mcp-server/issues"
+    "url": "https://github.com/caleb-mabry/postgres-mcp/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.6.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "dotenv": "^16.4.5",
     "kysely": "^0.27.3",
+    "node-sql-parser": "^5.4.0",
     "pg": "^8.11.5",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
-    "@testcontainers/postgresql": "^10.13.1",
+    "@testcontainers/postgresql": "^11.11.0",
+    "@types/express": "^5.0.6",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.7",
     "@types/pg": "^8.11.5",

@@ -78,7 +78,7 @@ describe('Pagination Integration Tests', () => {
           // Verify different users in different pages
           expect(page1.rows![0].id).not.toBe(page2.rows![0].id);
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // Cleanup test data
           await queryTool({
@@ -109,7 +109,7 @@ describe('Pagination Integration Tests', () => {
           expect(result.pagination?.offset).toBe(0);
           expect(result.pagination?.hasMore).toBe(false); // Less than page size, so no more
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -132,7 +132,7 @@ describe('Pagination Integration Tests', () => {
           expect(result.error).toBeDefined();
           expect(result.error).toContain('Input validation failed');
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -174,7 +174,7 @@ describe('Pagination Integration Tests', () => {
             expect(result.rows![0]).toHaveProperty('category');
           }
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -207,7 +207,7 @@ describe('Pagination Integration Tests', () => {
           expect(result.rows!.length).toBe(1); // Limited by page size
           expect(result.pagination?.pageSize).toBe(1);
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -233,7 +233,7 @@ describe('Pagination Integration Tests', () => {
           expect(result.rows![0].total_users).toBe('3');
           expect(result.pagination?.pageSize).toBe(1); // Reports requested size
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -268,7 +268,7 @@ describe('Pagination Integration Tests', () => {
           expect(result2.rows).toBeDefined();
           expect(result2.pagination?.offset).toBe(0); // Reports requested offset
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -300,7 +300,7 @@ describe('Pagination Integration Tests', () => {
             expect(user.age).toBeGreaterThan(20);
           });
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -328,7 +328,7 @@ describe('Pagination Integration Tests', () => {
           expect(result.pagination?.offset).toBe(0);
           expect(result.pagination?.hasMore).toBe(false);
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -356,7 +356,7 @@ describe('Pagination Integration Tests', () => {
           expect(result.pagination?.offset).toBe(100);
           expect(result.pagination?.hasMore).toBe(false);
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }
@@ -399,7 +399,7 @@ describe('Pagination Integration Tests', () => {
           expect(writeResult.error).toBeDefined();
           expect(writeResult.error).toContain('read-only mode');
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // Restore original READ_ONLY setting
           process.env.READ_ONLY = originalReadOnly;
@@ -423,7 +423,7 @@ describe('Pagination Integration Tests', () => {
           expect(result.error).toBeDefined();
           expect(result.error).toContain('not allowed');
 
-          await closeDb();
+          // await closeDb(); // Handled by teardown
         } finally {
           // No cleanup needed
         }

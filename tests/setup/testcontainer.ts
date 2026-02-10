@@ -1,6 +1,6 @@
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { Kysely, PostgresDialect, sql } from 'kysely';
 import { Pool } from 'pg';
+import { Kysely, PostgresDialect } from 'kysely';
 import fs from 'fs';
 import path from 'path';
 
@@ -12,12 +12,13 @@ export interface TestDatabase {
 }
 
 let container: StartedPostgreSqlContainer | null = null;
-let db: Kysely<TestDatabase> | null = null;
+let pool: Pool | null = null;
+let db: Kysely<any> | null = null;
 
 export async function isDockerAvailable(): Promise<boolean> {
   try {
     // Try to create a container to check if Docker is available
-    await new PostgreSqlContainer().start().then(c => c.stop());
+    await new PostgreSqlContainer('postgres:15').start().then(c => c.stop());
     return true;
   } catch (error) {
     return false;
@@ -26,7 +27,7 @@ export async function isDockerAvailable(): Promise<boolean> {
 
 export async function setupTestContainer(): Promise<{
   container: StartedPostgreSqlContainer;
-  db: Kysely<TestDatabase>;
+  pool: Pool;
   connectionInfo: {
     host: string;
     port: number;
@@ -54,8 +55,7 @@ export async function setupTestContainer(): Promise<{
     database: container.getDatabase(),
   };
 
-  // Create Kysely instance
-  const pool = new Pool({
+  pool = new Pool({
     host: connectionInfo.host,
     port: connectionInfo.port,
     user: connectionInfo.username,
@@ -65,17 +65,18 @@ export async function setupTestContainer(): Promise<{
     idleTimeoutMillis: 30000,
   });
 
-  db = new Kysely<TestDatabase>({
+  // Create Kysely instance
+  db = new Kysely({
     dialect: new PostgresDialect({
       pool,
     }),
   });
 
   // Set up schema and data
-  await setupTestSchema(db);
-  await loadSampleData(db);
+  await setupTestSchema(pool);
+  await loadSampleData(pool);
 
-  return { container, db, connectionInfo };
+  return { container, pool, connectionInfo };
 }
 
 export async function teardownTestContainer(): Promise<void> {
@@ -83,16 +84,20 @@ export async function teardownTestContainer(): Promise<void> {
     await db.destroy();
     db = null;
   }
+  if (pool && !pool.ended) {
+    await pool.end();
+    pool = null;
+  }
   if (container) {
     await container.stop();
     container = null;
   }
 }
 
-async function setupTestSchema(db: Kysely<TestDatabase>): Promise<void> {
+async function setupTestSchema(pool: Pool): Promise<void> {
   const schemaPath = path.join(getCurrentDir(), '../fixtures/test-schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf-8');
-  
+
   // Split by semicolon and execute each statement
   const statements = schema
     .split(';')
@@ -100,14 +105,14 @@ async function setupTestSchema(db: Kysely<TestDatabase>): Promise<void> {
     .filter(stmt => stmt.length > 0);
 
   for (const statement of statements) {
-    await sql.raw(statement).execute(db);
+    await pool.query(statement);
   }
 }
 
-async function loadSampleData(db: Kysely<TestDatabase>): Promise<void> {
+async function loadSampleData(pool: Pool): Promise<void> {
   const dataPath = path.join(getCurrentDir(), '../fixtures/sample-data.sql');
   const data = fs.readFileSync(dataPath, 'utf-8');
-  
+
   // Split by semicolon and execute each statement
   const statements = data
     .split(';')
@@ -115,15 +120,15 @@ async function loadSampleData(db: Kysely<TestDatabase>): Promise<void> {
     .filter(stmt => stmt.length > 0);
 
   for (const statement of statements) {
-    await sql.raw(statement).execute(db);
+    await pool.query(statement);
   }
 }
 
-export function getTestDb(): Kysely<TestDatabase> {
-  if (!db) {
-    throw new Error('Test database not initialized. Call setupTestContainer first.');
+export function getTestPool(): Pool {
+  if (!pool) {
+    throw new Error('Test pool not initialized. Call setupTestContainer first.');
   }
-  return db;
+  return pool;
 }
 
 export function getTestContainer(): StartedPostgreSqlContainer {
@@ -131,4 +136,11 @@ export function getTestContainer(): StartedPostgreSqlContainer {
     throw new Error('Test container not initialized. Call setupTestContainer first.');
   }
   return container;
+}
+
+export function getTestDb(): Kysely<any> {
+  if (!db) {
+    throw new Error('Test database not initialized. Call setupTestContainer first.');
+  }
+  return db;
 }

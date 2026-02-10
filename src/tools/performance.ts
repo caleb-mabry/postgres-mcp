@@ -1,4 +1,4 @@
-import { getDb } from "../db.js";
+import { getDb, getPool } from "../db.js";
 import { sql } from "kysely";
 import {
   ExplainQueryInputSchema,
@@ -21,7 +21,6 @@ export async function explainQueryTool(
     }
 
     const validatedInput = validation.data;
-    const db = getDb();
 
     // Safety check - prevent potentially dangerous queries
     const trimmedSql = validatedInput.sql.trim().toUpperCase();
@@ -57,7 +56,8 @@ export async function explainQueryTool(
     const optionsStr = options.length > 0 ? `(${options.join(", ")})` : "";
 
     const explainSql = `EXPLAIN ${optionsStr} ${validatedInput.sql}`;
-    const result = await sql.raw(explainSql).execute(db);
+    const pool = getPool();
+    const result = await pool.query(explainSql);
 
     return {
       plan: result.rows,

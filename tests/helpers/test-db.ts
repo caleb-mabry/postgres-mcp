@@ -36,7 +36,7 @@ export async function createTestEnvironment(): Promise<TestEnvironment> {
     throw new Error('Docker is required for integration tests');
   }
 
-  const { container, db, connectionInfo } = await setupTestContainer();
+  const { container, pool, connectionInfo } = await setupTestContainer();
   
   // Store original environment
   const originalEnv = { ...process.env };

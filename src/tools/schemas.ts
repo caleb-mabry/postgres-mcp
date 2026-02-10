@@ -52,7 +52,7 @@ export async function listSchemasTool(
         ORDER BY schema_name
       `;
     }
-
+    
     const result = await query.execute(db);
 
     return {

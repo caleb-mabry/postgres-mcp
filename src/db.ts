@@ -1,6 +1,8 @@
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool, PoolConfig } from "pg";
 import * as dotenv from "dotenv";
+import { config } from "./config.js";
+import { log } from "./logger.js";
 
 dotenv.config();
 
@@ -39,23 +41,16 @@ class DatabaseManager {
   }
 
   private loadConfig(): DatabaseConfig {
-    if (!process.env.DB_PASSWORD) {
-      throw new Error("DB_PASSWORD environment variable is required");
-    }
-
     return {
-      host: process.env.DB_HOST || "127.0.0.1",
-      port: parseInt(process.env.DB_PORT || "5432", 10),
-      user: process.env.DB_USER || "postgres",
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME || "postgres",
-      maxConnections: parseInt(process.env.DB_POOL_MAX || "5", 10),
-      idleTimeoutMs: parseInt(process.env.DB_IDLE_TIMEOUT || "5000", 10),
-      connectionTimeoutMs: parseInt(
-        process.env.DB_CONNECTION_TIMEOUT || "10000",
-        10
-      ),
-      queryTimeoutMs: parseInt(process.env.DB_QUERY_TIMEOUT || "30000", 10),
+      host: config.db.host,
+      port: config.db.port,
+      user: config.db.user,
+      password: config.db.password,
+      database: config.db.database,
+      maxConnections: config.db.maxConnections,
+      idleTimeoutMs: config.db.idleTimeoutMs,
+      connectionTimeoutMs: config.db.connectionTimeoutMs,
+      queryTimeoutMs: config.db.queryTimeoutMs,
       ssl: this.buildSSLConfig(),
     };
   }
@@ -63,21 +58,21 @@ class DatabaseManager {
   private buildSSLConfig():
     | boolean
     | { rejectUnauthorized: boolean; ca?: string } {
-    if (process.env.DB_SSL === "false") {
+    if (!config.db.ssl.enabled) {
       return false;
     }
 
     const sslConfig: { rejectUnauthorized: boolean; ca?: string } = {
-      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false",
+      rejectUnauthorized: config.db.ssl.rejectUnauthorized,
     };
 
     // Add CA certificate if provided
-    if (process.env.DB_SSL_CA_CERT) {
-      sslConfig.ca = process.env.DB_SSL_CA_CERT;
+    if (config.db.ssl.caCert) {
+      sslConfig.ca = config.db.ssl.caCert;
     }
 
     // For when explicitly allowing self-signed certs
-    if (process.env.DB_SSL_ALLOW_SELF_SIGNED === "true") {
+    if (config.db.ssl.allowSelfSigned) {
       sslConfig.rejectUnauthorized = false;
     }
 
@@ -113,17 +108,11 @@ class DatabaseManager {
     this.pool = new Pool(poolConfig);
 
     this.pool.on("error", (err) => {
-      console.error("Database pool error:", {
-        message: err.message,
-        code: (err as any).code,
-        timestamp: new Date().toISOString(),
-      });
+      log.error(`Pool error: ${err.message}`, "db", { code: (err as any).code });
     });
 
     this.pool.on("connect", () => {
-      if (process.env.NODE_ENV === "development") {
-        // Database connection established
-      }
+      log.debug("New pool connection established", "db");
     });
 
     this.db = new Kysely<Database>({
@@ -171,6 +160,13 @@ class DatabaseManager {
     return { ...this.config }; // Return a copy to prevent modification
   }
 
+  public getPool(): Pool {
+    if (!this.pool) {
+      this.connect();
+    }
+    return this.pool!;
+  }
+
   public isConnected(): boolean {
     return this.db !== null && this.pool !== null;
   }
@@ -182,6 +178,10 @@ export function getDb(): Kysely<Database> {
 
 export async function closeDb(): Promise<void> {
   await DatabaseManager.getInstance().close();
+}
+
+export function getPool(): Pool {
+  return DatabaseManager.getInstance().getPool();
 }
 
 export function getDbManager(): DatabaseManager {
