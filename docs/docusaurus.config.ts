@@ -122,7 +122,7 @@ const config: Config = {
             },
             {
               label: 'npm Package',
-              href: 'https://www.npmjs.com/package/postgres-mcp-server',
+              href: 'https://www.npmjs.com/package/@calebmabry/postgres-mcp-server',
             },
           ],
         },

@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerTools } from "./register-tools.js";
 import { closeDb } from "./db.js";
 import { log } from "./logger.js";
+import { VERSION, PACKAGE_NAME } from "./version.js";
 
 async function shutdown() {
   await closeDb();
@@ -15,12 +16,12 @@ process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
 async function main() {
-  log.banner("stdio", "1.0.2");
+  log.banner("stdio", VERSION);
 
   const server = new McpServer(
     {
-      name: "postgres-mcp-server",
-      version: "1.0.0",
+      name: PACKAGE_NAME,
+      version: VERSION,
     },
     {
       capabilities: {

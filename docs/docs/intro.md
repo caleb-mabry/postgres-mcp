@@ -26,13 +26,13 @@ Postgres MCP Server enables AI assistants like Claude to interact with PostgreSQ
 Install via npx (no installation required):
 
 ```bash
-npx -y postgres-mcp-server
+npx -y @calebmabry/postgres-mcp-server
 ```
 
 Or install globally:
 
 ```bash
-npm install -g postgres-mcp-server
+npm install -g @calebmabry/postgres-mcp-server
 ```
 
 ### Client Setup
@@ -52,7 +52,7 @@ Postgres MCP Server works with multiple MCP-compatible clients:
   "mcpServers": {
     "postgres": {
       "command": "npx",
-      "args": ["-y", "postgres-mcp-server"],
+      "args": ["-y", "@calebmabry/postgres-mcp-server"],
       "env": {
         "DB_HOST": "localhost",
         "DB_USER": "your_username",
@@ -72,7 +72,7 @@ Choose your client from the Setup section for detailed configuration instruction
 Install and run as HTTP server:
 
 ```bash
-npm install postgres-mcp-server
+npm install @calebmabry/postgres-mcp-server
 npm run start:http
 ```
 

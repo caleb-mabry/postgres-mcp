@@ -21,7 +21,7 @@ This mode uses stdio (standard input/output) for communication and is the easies
   "mcpServers": {
     "postgres": {
       "command": "npx",
-      "args": ["-y", "postgres-mcp-server"],
+      "args": ["-y", "@calebmabry/postgres-mcp-server"],
       "env": {
         "DB_HOST": "localhost",
         "DB_USER": "your_user",
@@ -66,7 +66,7 @@ Server will be available at:
 |---------|------------|-----------|
 | **Use Case** | Claude Desktop | Web apps, APIs |
 | **Transport** | stdin/stdout | HTTP + SSE |
-| **Startup** | `npx postgres-mcp-server` | `npm run start:http` |
+| **Startup** | `npx @calebmabry/postgres-mcp-server` | `npm run start:http` |
 | **Sessions** | Single | Multiple concurrent |
 | **Security** | Local only | Network accessible |
 | **Configuration** | Environment vars | Environment vars |

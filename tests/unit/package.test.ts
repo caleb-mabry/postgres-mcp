@@ -17,7 +17,7 @@ describe("Package Structure", () => {
     test("should have valid package.json structure", () => {
       const pkg = require("../../package.json");
 
-      expect(pkg.name).toBe("postgres-mcp-server");
+      expect(pkg.name).toBe("@calebmabry/postgres-mcp-server");
       expect(pkg.main).toBe("dist/index.js");
       expect(pkg.type).toBe("module");
       expect(pkg.bin).toHaveProperty("postgres-mcp-server");

@@ -21,7 +21,7 @@ Open your Cline MCP settings file and add:
   "mcpServers": {
     "postgres-mcp-server": {
       "command": "npx",
-      "args": ["-y", "postgres-mcp-server"],
+      "args": ["-y", "@calebmabry/postgres-mcp-server"],
       "env": {
         "DB_HOST": "localhost",
         "DB_PORT": "5432",

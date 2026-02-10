@@ -3,7 +3,7 @@
     "postgres-mcp-server": {
       "command": {
         "path": "npx",
-        "args": ["-y", "postgres-mcp-server"]
+        "args": ["-y", "@calebmabry/postgres-mcp-server"]
       },
       "settings": {
         "DB_HOST": "127.0.0.1",

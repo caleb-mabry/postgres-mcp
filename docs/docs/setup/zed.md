@@ -87,7 +87,7 @@ You can configure multiple databases for different projects:
     "postgres-prod": {
       "command": {
         "path": "npx",
-        "args": ["-y", "postgres-mcp-server"]
+        "args": ["-y", "@calebmabry/postgres-mcp-server"]
       },
       "settings": {
         "DB_HOST": "prod.example.com",
@@ -101,7 +101,7 @@ You can configure multiple databases for different projects:
     "postgres-dev": {
       "command": {
         "path": "npx",
-        "args": ["-y", "postgres-mcp-server"]
+        "args": ["-y", "@calebmabry/postgres-mcp-server"]
       },
       "settings": {
         "DB_HOST": "localhost",
@@ -130,7 +130,7 @@ Once configured, you can use the postgres-mcp-server through Zed's AI assistant:
 
 1. Check Zed's console output (View → Toggle Console)
 2. Verify database connectivity: `psql -h localhost -U your_username -d your_database`
-3. Test the server manually: `npx -y postgres-mcp-server`
+3. Test the server manually: `npx -y @calebmabry/postgres-mcp-server`
 
 ### Restart Required
 

@@ -24,7 +24,7 @@ Add to your Claude Desktop configuration file:
       "command": "npx",
       "args": [
         "-y",
-        "postgres-mcp-server"
+        "@calebmabry/postgres-mcp-server"
       ],
       "env": {
         "DB_HOST": "localhost",
@@ -130,7 +130,7 @@ Once configured, Claude Desktop will have access to these PostgreSQL tools:
 
 3. Test the server manually:
    ```bash
-   npx -y postgres-mcp-server
+   npx -y @calebmabry/postgres-mcp-server
    ```
 
 ### Permission Issues
@@ -192,7 +192,7 @@ You can configure multiple PostgreSQL connections:
   "mcpServers": {
     "postgres-prod": {
       "command": "npx",
-      "args": ["-y", "postgres-mcp-server"],
+      "args": ["-y", "@calebmabry/postgres-mcp-server"],
       "env": {
         "DB_NAME": "production",
         "READ_ONLY": "true"
@@ -200,7 +200,7 @@ You can configure multiple PostgreSQL connections:
     },
     "postgres-dev": {
       "command": "npx",
-      "args": ["-y", "postgres-mcp-server"],
+      "args": ["-y", "@calebmabry/postgres-mcp-server"],
       "env": {
         "DB_NAME": "development",
         "READ_ONLY": "false"

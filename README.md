@@ -1,15 +1,15 @@
 # Postgres MCP Server
 
-[![npm version](https://badge.fury.io/js/postgres-mcp-server.svg)](https://www.npmjs.com/package/postgres-mcp-server)
+[![npm version](https://badge.fury.io/js/@calebmabry%2Fpostgres-mcp-server.svg)](https://www.npmjs.com/package/@calebmabry/postgres-mcp-server)
 [![Tests](https://github.com/caleb-mabry/postgres-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/caleb-mabry/postgres-mcp/actions/workflows/test.yml)
 [![GitHub issues](https://img.shields.io/github/issues/caleb-mabry/postgres-mcp)](https://github.com/caleb-mabry/postgres-mcp/issues)
-[![Documentation](https://img.shields.io/badge/docs-docusaurus-blue)](https://caleb-mabry.github.io/postgres-mcp/)
+[![Documentation](https://img.shields.io/badge/docs-docusaurus-blue)](https://calebmabry.github.io/postgres-mcp-server/)
 
 A Model Context Protocol (MCP) server that provides secure database access to PostgreSQL through Kysely ORM. This server enables Claude Desktop to interact with PostgreSQL databases using natural language.
 
 ## 📚 Documentation
 
-**Full documentation is available at: [caleb-mabry.github.io/postgres-mcp](https://caleb-mabry.github.io/postgres-mcp/)**
+**Full documentation is available at: [calebmabry.github.io/postgres-mcp-server](https://calebmabry.github.io/postgres-mcp-server/)**
 
 ## Features
 
@@ -32,7 +32,7 @@ See [HTTP_SERVER.md](./HTTP_SERVER.md) for HTTP transport setup
 ### Direct Installation
 
 ```bash
-npx -y postgres-mcp-server
+npx -y @calebmabry/postgres-mcp-server
 ```
 
 ## Configuration
@@ -82,7 +82,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "postgres-mcp-server": {
       "command": "npx",
-      "args": ["-y", "postgres-mcp-server"],
+      "args": ["-y", "@calebmabry/postgres-mcp-server"],
       "env": {
         "DB_HOST": "127.0.0.1",
         "DB_PORT": "5432",
@@ -112,7 +112,7 @@ Add to `.cline/mcp_settings.json`:
   "mcpServers": {
     "postgres-mcp-server": {
       "command": "npx",
-      "args": ["-y", "postgres-mcp-server"],
+      "args": ["-y", "@calebmabry/postgres-mcp-server"],
       "env": {
         "DB_HOST": "localhost",
         "DB_NAME": "your_database",
@@ -136,7 +136,7 @@ Add to Zed settings (Settings → Context Servers):
     "postgres-mcp-server": {
       "command": {
         "path": "npx",
-        "args": ["-y", "postgres-mcp-server"]
+        "args": ["-y", "@calebmabry/postgres-mcp-server"]
       },
       "settings": {
         "DB_HOST": "localhost",
@@ -165,7 +165,7 @@ See [docker-compose.example.yml](./docker-compose.example.yml) for a full exampl
 
 ```bash
 # Clone and install dependencies
-git clone https://github.com/abiswas97/postgres-mcp-server.git
+git clone https://github.com/caleb-mabry/postgres-mcp.git
 cd postgres-mcp-server
 npm install
 

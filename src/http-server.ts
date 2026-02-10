@@ -9,6 +9,7 @@ import { config } from "./config.js";
 import { registerTools } from "./register-tools.js";
 import { closeDb } from "./db.js";
 import { log } from "./logger.js";
+import { VERSION, PACKAGE_NAME } from "./version.js";
 
 // Store active transports by session ID
 const transports: Record<string, StreamableHTTPServerTransport> = {};
@@ -16,8 +17,8 @@ const transports: Record<string, StreamableHTTPServerTransport> = {};
 function createServer() {
   const server = new McpServer(
     {
-      name: "postgres-mcp-server",
-      version: "1.0.0",
+      name: PACKAGE_NAME,
+      version: VERSION,
     },
     {
       capabilities: {
@@ -163,7 +164,7 @@ const mcpDeleteHandler = async (req: Request, res: Response) => {
 
 app.delete("/mcp", mcpDeleteHandler);
 
-log.banner("http", "1.0.2");
+log.banner("http", VERSION);
 
 const server = app.listen(PORT, () => {
   log.info(`Listening on http://localhost:${PORT}`, "http");
