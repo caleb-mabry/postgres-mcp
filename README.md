@@ -3,13 +3,13 @@
 [![npm version](https://badge.fury.io/js/@calebmabry%2Fpostgres-mcp-server.svg)](https://www.npmjs.com/package/@calebmabry/postgres-mcp-server)
 [![Tests](https://github.com/caleb-mabry/postgres-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/caleb-mabry/postgres-mcp/actions/workflows/test.yml)
 [![GitHub issues](https://img.shields.io/github/issues/caleb-mabry/postgres-mcp)](https://github.com/caleb-mabry/postgres-mcp/issues)
-[![Documentation](https://img.shields.io/badge/docs-docusaurus-blue)](https://calebmabry.github.io/postgres-mcp-server/)
+[![Documentation](https://img.shields.io/badge/docs-docusaurus-blue)](https://caleb-mabry.github.io/postgres-mcp/)
 
 A Model Context Protocol (MCP) server that provides secure database access to PostgreSQL through Kysely ORM. This server enables Claude Desktop to interact with PostgreSQL databases using natural language.
 
 ## 📚 Documentation
 
-**Full documentation is available at: [calebmabry.github.io/postgres-mcp-server](https://calebmabry.github.io/postgres-mcp-server/)**
+**Full documentation is available at: [caleb-mabry.github.io/postgres-mcp](https://caleb-mabry.github.io/postgres-mcp/)**
 
 ## Features
 
