@@ -207,16 +207,16 @@ npm run test:integration
 | `DB_USER`           | `postgres`  | Database user                           |
 | `DB_PASSWORD`       | _required_  | Database password                       |
 | `DB_NAME`           | `postgres`  | Database name                           |
-| `DB_SSL`            | `true`      | Enable SSL connection                   |
+| `DB_SSL`            | `false`     | Enable SSL connection (set to `false` for local dev) |
 | `READ_ONLY`         | `true`      | Restrict to SELECT/WITH/EXPLAIN queries |
 | `QUERY_TIMEOUT`     | `30000`     | Query timeout in milliseconds           |
-| `MODE`              | `stdio`     | Server mode in Docker: `stdio` or `http` |
-
-For detailed documentation on all features and setup options, visit **[caleb-mabry.github.io/postgres-mcp](https://caleb-mabry.github.io/postgres-mcp/)**.
 | `MAX_PAGE_SIZE`     | `500`       | Maximum rows per page                   |
 | `DEFAULT_PAGE_SIZE` | `100`       | Default page size when not specified    |
 | `PORT`              | `3000`      | HTTP server port (HTTP mode only)       |
 | `ALLOWED_HOSTS`     | _none_      | Comma-separated allowed hosts (HTTP mode only). Example: `localhost,127.0.0.1,example.com` |
+| `MODE`              | `stdio`     | Server mode in Docker: `stdio` or `http` |
+
+For detailed documentation on all features and setup options, visit **[caleb-mabry.github.io/postgres-mcp](https://caleb-mabry.github.io/postgres-mcp/)**.
 
 ## License
 
