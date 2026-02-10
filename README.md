@@ -46,6 +46,10 @@ DB_USER=postgres
 DB_PASSWORD=your_password_here
 DB_NAME=postgres
 DB_SSL=true
+
+# HTTP Server mode only (optional)
+PORT=3000
+ALLOWED_HOSTS=localhost,127.0.0.1
 ```
 
 ## Available Tools
@@ -197,6 +201,8 @@ npm run test:integration
 | `QUERY_TIMEOUT`     | `30000`     | Query timeout in milliseconds           |
 | `MAX_PAGE_SIZE`     | `500`       | Maximum rows per page                   |
 | `DEFAULT_PAGE_SIZE` | `100`       | Default page size when not specified    |
+| `PORT`              | `3000`      | HTTP server port (HTTP mode only)       |
+| `ALLOWED_HOSTS`     | _none_      | Comma-separated allowed hosts (HTTP mode only). Example: `localhost,127.0.0.1,example.com` |
 
 ## License
 
